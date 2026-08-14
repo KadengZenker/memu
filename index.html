@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memu</title>
+
+  <style>
+    :root {
+      --bg: #ffe4d1;
+      --bg2: #fff4ec;
+      --card: #ffffff;
+      --text: #111111;
+      --accent: #ff6a00;
+      --accent-dark: #d95400;
+      --green: #087a29;
+      --muted: #6b6b6b;
+      --border: rgba(0, 0, 0, 0.1);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    body.dark {
+      --bg: #121212;
+      --bg2: #1e1e1e;
+      --card: #292929;
+      --text: #f5f5f5;
+      --accent: #ff8a3d;
+      --accent-dark: #ff6a00;
+      --green: #54c95c;
+      --muted: #bbbbbb;
+      --border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: linear-gradient(
+        180deg,
+        var(--bg) 0%,
+        var(--bg2) 35%,
+        var(--bg2) 100%
+      );
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    body.dark .top-bar {
+      background: rgba(30, 30, 30, 0.9);
+    }
+
+    .gear-button,
+    .cart-open-button {
+      border: none;
+      color: white;
+      background: var(--accent);
+      font-weight: 800;
+    }
+
+    .gear-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .gear-button:hover {
+      transform: rotate(45deg);
+    }
+
+    .cart-open-button {
+      padding: 10px 15px;
+      border-radius: 10px;
+    }
+
+    .hero {
+      width: 100%;
+      min-height: 42vh;
+      overflow: hidden;
+      background: #ff8a3d;
+    }
+
+    .hero img {
+      display: block;
+      width: 100%;
+      height: 42vh;
+      object-fit: cover;
+    }
+
+    .content {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .section-title {
+      margin: 12px 0 18px;
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+    }
+
+    .search-box,
+    .sort-box {
+      margin-bottom: 20px;
+    }
+
+    .search-box label,
+    .sort-box label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .search-box input,
+    .sort-box select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      outline: none;
+      color: var(--text);
+      background: var(--card);
+      font-size: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .search-box input:focus,
+    .sort-box select:focus {
+      box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2);
+    }
+
+    .no-results {
+      display: none;
+      margin: 25px 0;
+      color: var(--muted);
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 22px 48px rgba(0, 0, 0, 0.16);
+    }
+
+    .card img {
+      display: block;
+      width: 80%;
+      aspect-ratio: 1 / 1;
+      margin: 12px auto 0;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #f4f4f4;
+    }
+
+    .card-body {
+      padding: 14px;
+    }
+
+    .card-body h3 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .price {
+      margin-bottom: 6px;
+      color: var(--accent);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .brand {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .stock {
+      color: var(--green);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .info-box {
+      margin: 26px 0 50px;
+      padding: 22px;
+      color: white;
+      background: linear-gradient(
+        135deg,
+        #ff6a00 0%,
+        #ff8a3d 100%
+      );
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .info-box h2 {
+      margin-bottom: 14px;
+    }
+
+    .info-box p {
+      margin-bottom: 10px;
+      line-height: 1.7;
+    }
+
+    .modal,
+    .cart-modal,
+    .settings-modal,
+    .ad-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      padding: 20px;
+      overflow: auto;
+      background: rgba(0, 0, 0, 0.82);
+    }
+
+    .modal-inner,
+    .cart-inner,
+    .settings-inner {
+      max-width: 760px;
+      margin: 40px auto;
+      overflow: hidden;
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal-top img {
+      display: block;
+      width: 85%;
+      max-height: 48vh;
+      margin: 18px auto 0;
+      object-fit: cover;
+      border-radius: 18px;
+      background: #f3f3f3;
+    }
+
+    .modal-body,
+    .cart-inner,
+    .settings-inner {
+      padding: 20px;
+    }
+
+    .modal-body h3,
+    .cart-inner h2,
+    .settings-inner h2 {
+      margin-bottom: 14px;
+    }
+
+    .modal-body h3 {
+      font-size: 1.6rem;
+    }
+
+    .modal-body .price {
+      font-size: 1.9rem;
+    }
+
+    .modal-body .stock {
+      margin: 8px 0 18px;
+      font-size: 1rem;
+    }
+
+    .close-button {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10000;
+      width: 46px;
+      height: 46px;
+      border: none;
+      border-radius: 50%;
+      color: #111111;
+      background: white;
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    body.dark .close-button {
+      color: white;
+      background: #333333;
+    }
+
+    .quantity-title {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      width: 160px;
+      height: 48px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      border: 2px solid #ffb27a;
+      border-radius: 12px;
+      background: #fff8f3;
+    }
+
+    body.dark .quantity-selector {
+      border-color: #555555;
+      background: #2a2a2a;
+    }
+
+    .quantity-selector button {
+      width: 48px;
+      height: 100%;
+      border: none;
+      color: white;
+      background: var(--accent);
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .quantity-selector input {
+      width: 64px;
+      height: 100%;
+      border: none;
+      outline: none;
+      color: var(--text);
+      background: transparent;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .main-button,
+    .ad-button,
+    .save-button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 16px 20px;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      background: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .main-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .ad-button {
+      background: #4caf50;
+    }
+
+    .delivery-box {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border: 2px solid #ffb27a;
+      border-radius: 16px;
+      color: #542600;
+      background: #fff0e5;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .delivery-box strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--accent-dark);
+      font-size: 1.2rem;
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cart-item-info {
+      flex: 1;
+    }
+
+    .cart-item-name {
+      font-weight: 800;
+    }
+
+    .cart-item-price {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .cart-item-quantity {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .remove-button {
+      padding: 7px 10px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      background: #e53935;
+      font-weight: 800;
+    }
+
+    .cart-total {
+      margin-top: 18px;
+      text-align: right;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .settings-row {
+      margin-bottom: 18px;
+    }
+
+    .settings-row label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 800;
+    }
+
+    .settings-row input,
+    .settings-row select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      color: var(--text);
+      background: var(--bg2);
+      font-size: 1rem;
+    }
+
+    .toggle-line {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toggle-line input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+    }
+
+    .loading-logo {
+      width: 120px;
+      height: 120px;
+      border: 6px solid var(--accent);
+      border-radius: 50%;
+      background: url("logo1.jpg") center / cover no-repeat;
+      animation: spin 1.5s linear infinite;
+    }
+
+    .loading-text {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ad-overlay {
+      z-index: 19000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .ad-logo {
+      width: 200px;
+      height: 200px;
+      border: 8px solid var(--accent);
+      border-radius: 50%;
+      background: url("logo1.jpg") center / cover no-repeat;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .ad-text {
+      max-width: 400px;
+      margin-top: 20px;
+      color: white;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .ad-close {
+      margin-top: 20px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      background: var(--accent);
+      font-weight: 800;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hero,
+      .hero img {
+        min-height: 36vh;
+        height: 36vh;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-bar {
+        padding: 8px 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-logo"></div>
+    <div class="loading-text">Memu lädt…</div>
+  </div>
+
+  <header class="top-bar">
+    <button
+      class="gear-button"
+      id="settingsButton"
+      type="button"
+      aria-label="Einstellungen öffnen"
+    >
+      ⚙️
+    </button>
+
+    <button
+      class="cart-open-button"
+      id="cartButton"
+      type="button"
+    >
+      Warenkorb
+    </button>
+  </header>
+
+  <section class="hero">
+    <img src="logo1.jpg" alt="Memu Logo">
+  </section>
+
+  <main class="content">
+    <h1 class="section-title" id="productsTitle">
+      Produkte
+    </h1>
+
+    <div class="search-box">
+      <label for="productSearch" id="searchLabel">
+        Produkte suchen
+      </label>
+
+      <input
+        id="productSearch"
+        type="search"
+        placeholder="Produktname eingeben..."
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="sort-box">
+      <label for="sortSelect" id="sortLabel">
+        Sortieren nach
+      </label>
+
+      <select id="sortSelect">
+        <option value="default">Standard</option>
+        <option value="price-low">
+          Preis: niedrig nach hoch
+        </option>
+        <option value="price-high">
+          Preis: hoch nach niedrig
+        </option>
+        <option value="brand">Marke</option>
+        <option value="name-az">
+          Alphabetisch: A–Z
+        </option>
+        <option value="name-za">
+          Alphabetisch: Z–A
+        </option>
+      </select>
+    </div>
+
+    <p class="no-results" id="noResults">
+      Keine Produkte gefunden.
+    </p>
+
+    <div class="grid" id="grid"></div>
+
+    <section class="info-box">
+      <h2 id="infoTitle">Informationen</h2>
+
+      <p id="infoOne">
+        Wir achten auf gute Ressourcen.
+      </p>
+
+      <p id="infoTwo">
+        Wir stellen unsere Produkte ohne Kinderarbeit her.
+      </p>
+
+      <p id="infoThree">
+        Für jedes Produkt, das verkauft wird, pflanzen wir einen Baum.
+      </p>
+    </section>
+  </main>
+
+  <div class="modal" id="productModal">
+    <button
+      class="close-button"
+      id="closeProductButton"
+      type="button"
+      aria-label="Produktseite schließen"
+    >
+      ×
+    </button>
+
+    <div class="modal-inner">
+      <div class="modal-top">
+        <img id="modalImg" src="" alt="">
+      </div>
+
+      <div class="modal-body">
+        <h3 id="modalName"></h3>
+        <div class="price" id="modalPrice"></div>
+        <div class="stock" id="modalStock"></div>
+
+        <label
+          class="quantity-title"
+          for="quantityInput"
+          id="quantityLabel"
+        >
+          Anzahl:
+        </label>
+
+        <div class="quantity-selector">
+          <button id="minusButton" type="button">−</button>
+
+          <input
+            id="quantityInput"
+            type="number"
+            value="1"
+            min="1"
+            max="99"
+            readonly
+          >
+
+          <button id="plusButton" type="button">+</button>
+        </div>
+
+        <button
+          class="main-button"
+          id="addToCartButton"
+          type="button"
+        >
+          In den Warenkorb
+        </button>
+
+        <button
+          class="ad-button"
+          id="adButton"
+          type="button"
+        >
+          Werbung ansehen (1 % Rabatt)
+        </button>
+
+        <div class="delivery-box" id="deliveryBox">
+          <span id="deliveryText">
+            Ihre Bestellung wird in
+          </span>
+
+          <strong id="countdown">
+            7 Monate
+          </strong>
+
+          <span id="deliveryEnding">
+            geliefert.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-modal" id="cartModal">
+    <button
+      class="close-button"
+      id="closeCartButton"
+      type="button"
+      aria-label="Warenkorb schließen"
+    >
+      ×
+    </button>
+
+    <div class="cart-inner">
+      <h2 id="cartTitle">Dein Warenkorb</h2>
+
+      <div id="cartItems"></div>
+
+      <div class="cart-total" id="cartTotal">
+        Gesamt: 0,00 €
+      </div>
+
+      <button
+        class="main-button"
+        id="checkoutButton"
+        type="button"
+      >
+        Alles kaufen
+      </button>
+    </div>
+  </div>
+
+  <div class="settings-modal" id="settingsModal">
+    <button
+      class="close-button"
+      id="closeSettingsButton"
+      type="button"
+      aria-label="Einstellungen schließen"
+    >
+      ×
+    </button>
+
+    <div class="settings-inner">
+      <h2 id="settingsTitle">Einstellungen</h2>
+
+      <div class="settings-row">
+        <label class="toggle-line" for="darkModeInput">
+          <span id="darkModeLabel">Dark Mode</span>
+          <input id="darkModeInput" type="checkbox">
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <label for="languageInput" id="languageLabel">
+          Sprache
+        </label>
+
+        <select id="languageInput">
+          <option value="de">Deutsch</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <div class="settings-row">
+        <label for="nameInput" id="nameLabel">
+          Name
+        </label>
+
+        <input
+          id="nameInput"
+          type="text"
+          placeholder="Dein Name"
+        >
+      </div>
+
+      <div class="settings-row">
+        <label for="emailInput" id="emailLabel">
+          E-Mail
+        </label>
+
+        <input
+          id="emailInput"
+          type="email"
+          placeholder="deine@email.de"
+        >
+      </div>
+
+      <div class="settings-row">
+        <label for="addressInput" id="addressLabel">
+          Lieferadresse
+        </label>
+
+        <input
+          id="addressInput"
+          type="text"
+          placeholder="Straße, Hausnummer, Ort"
+        >
+      </div>
+
+      <button
+        class="save-button"
+        id="saveSettingsButton"
+        type="button"
+      >
+        Einstellungen speichern
+      </button>
+    </div>
+  </div>
+
+  <div class="ad-overlay" id="adOverlay">
+    <div class="ad-logo"></div>
+
+    <div class="ad-text">
+      Danke fürs Zuschauen! Du bekommst 1 % Rabatt auf dieses Produkt.
+    </div>
+
+    <button
+      class="ad-close"
+      id="adClose"
+      type="button"
+    >
+      Schließen
+    </button>
+  </div>
+
+  <script>
+    const products = [
+      {
+        name: "Jordan-Schlappe",
+        price: "299,99 €",
+        img: "produkt1.jpg",
+        stock: 7,
+        brand: "Jordan"
+      },
+      {
+        name: "Perserteppich",
+        price: "2.199,00 €",
+        img: "produkt2.jpg",
+        stock: 3,
+        brand: "Sonstige"
+      },
+      {
+        name: "Tasche",
+        price: "389,00 €",
+        img: "produkt3.jpg",
+        stock: 12,
+        brand: "Sonstige"
+      },
+      {
+        name: "Pulli",
+        price: "549,00 €",
+        img: "produkt4.jpg",
+        stock: 5,
+        brand: "Sonstige"
+      },
+      {
+        name: "XXXL Teppich",
+        price: "2.899,00 €",
+        img: "produkt8.jpg",
+        stock: 4,
+        brand: "Sonstige"
+      },
+      {
+        name: "Flasche",
+        price: "199,00 €",
+        img: "produkt9.jpg",
+        stock: 21,
+        brand: "Sonstige"
+      },
+      {
+        name: "Brainrot-Sticker",
+        price: "119,00 €",
+        img: "produkt10.jpg",
+        stock: 31,
+        brand: "Sonstige"
+      },
+      {
+        name: "Fußmatte",
+        price: "499,00 €",
+        img: "produkt11.jpg",
+        stock: 6,
+        brand: "Sonstige"
+      },
+      {
+        name: "Fake-Pikasso",
+        price: "4.999,00 €",
+        img: "produkt13.jpg",
+        stock: 2,
+        brand: "Pikasso"
+      },
+      {
+        name: "Fake-Van-Gogh-Gemälde",
+        price: "5.499,00 €",
+        img: "produkt14.jpg",
+        stock: 1,
+        brand: "Van Gogh"
+      },
+      {
+        name: "Fake-Mona-Lisa",
+        price: "6.299,00 €",
+        img: "produkt15.jpg",
+        stock: 2,
+        brand: "Sonstige"
+      },
+      {
+        name: "Fake-Rolex aus Plastik",
+        price: "1.499,00 €",
+        img: "produkt16.jpg",
+        stock: 6,
+        brand: "Rolex"
+      },
+      {
+        name: "Gucci Tasche vom Flohmarkt",
+        price: "899,00 €",
+        img: "produkt17.jpg",
+        stock: 4,
+        brand: "Gucci"
+      },
+      {
+        name: "Gucci Cap",
+        price: "399,00 €",
+        img: "produkt18.jpg",
+        stock: 8,
+        brand: "Gucci"
+      },
+      {
+        name: "Fake-Diamant aus Glas",
+        price: "3.799,00 €",
+        img: "produkt19.jpg",
+        stock: 3,
+        brand: "Sonstige"
+      },
+      {
+        name: "Fake-Louis-Vuitton-Koffer aus Pappe",
+        price: "2.199,00 €",
+        img: "produkt20.jpg",
+        stock: 5,
+        brand: "Louis Vuitton"
+      },
+      {
+        name: "Getragene Nike-Schuhe von Maradona",
+        price: "9.999,00 €",
+        img: "produkt21.jpg",
+        stock: 1,
+        brand: "Nike"
+      }
+    ];
+
+    const grid =
+      document.getElementById("grid");
+
+    const productSearch =
+      document.getElementById("productSearch");
+
+    const sortSelect =
+      document.getElementById("sortSelect");
+
+    const noResults =
+      document.getElementById("noResults");
+
+    const productModal =
+      document.getElementById("productModal");
+
+    const closeProductButton =
+      document.getElementById("closeProductButton");
+
+    const modalImg =
+      document.getElementById("modalImg");
+
+    const modalName =
+      document.getElementById("modalName");
+
+    const modalPrice =
+      document.getElementById("modalPrice");
+
+    const modalStock =
+      document.getElementById("modalStock");
+
+    const quantityInput =
+      document.getElementById("quantityInput");
+
+    const minusButton =
+      document.getElementById("minusButton");
+
+    const plusButton =
+      document.getElementById("plusButton");
+
+    const addToCartButton =
+      document.getElementById("addToCartButton");
+
+    const adButton =
+      document.getElementById("adButton");
+
+    const deliveryBox =
+      document.getElementById("deliveryBox");
+
+    const deliveryText =
+      document.getElementById("deliveryText");
+
+    const countdown =
+      document.getElementById("countdown");
+
+    const deliveryEnding =
+      document.getElementById("deliveryEnding");
+
+    const cartButton =
+      document.getElementById("cartButton");
+
+    const cartModal =
+      document.getElementById("cartModal");
+
+    const closeCartButton =
+      document.getElementById("closeCartButton");
+
+    const cartItems =
+      document.getElementById("cartItems");
+
+    const cartTotal =
+      document.getElementById("cartTotal");
+
+    const checkoutButton =
+      document.getElementById("checkoutButton");
+
+    const settingsButton =
+      document.getElementById("settingsButton");
+
+    const settingsModal =
+      document.getElementById("settingsModal");
+
+    const closeSettingsButton =
+      document.getElementById("closeSettingsButton");
+
+    const saveSettingsButton =
+      document.getElementById("saveSettingsButton");
+
+    const darkModeInput =
+      document.getElementById("darkModeInput");
+
+    const languageInput =
+      document.getElementById("languageInput");
+
+    const nameInput =
+      document.getElementById("nameInput");
+
+    const emailInput =
+      document.getElementById("emailInput");
+
+    const addressInput =
+      document.getElementById("addressInput");
+
+    const adOverlay =
+      document.getElementById("adOverlay");
+
+    const adClose =
+      document.getElementById("adClose");
+
+    const loadingOverlay =
+      document.getElementById("loadingOverlay");
+
+    let currentProductIndex = null;
+    let countdownInterval = null;
+    let adWatched = false;
+
+    /*
+      Der Warenkorb wird beim ersten Start geleert.
+      Danach bleibt er bei einem normalen Neuladen erhalten.
+    */
+
+    if (
+      !localStorage.getItem(
+        "memuCartInitializedV4"
+      )
+    ) {
+      localStorage.removeItem("memuCart");
+      localStorage.removeItem("memuOrder");
+
+      localStorage.setItem(
+        "memuCartInitializedV4",
+        "true"
+      );
+    }
+
+    let cart = JSON.parse(
+      localStorage.getItem("memuCart") || "[]"
+    );
+
+    let savedOrder = JSON.parse(
+      localStorage.getItem("memuOrder") || "null"
+    );
+
+    const savedSettings = JSON.parse(
+      localStorage.getItem("memuSettings") || "{}"
+    );
+
+    function saveCart() {
+      localStorage.setItem(
+        "memuCart",
+        JSON.stringify(cart)
+      );
+    }
+
+    function saveSettings() {
+      const settings = {
+        darkMode: darkModeInput.checked,
+        language: languageInput.value,
+        name: nameInput.value,
+        email: emailInput.value,
+        address: addressInput.value
+      };
+
+      localStorage.setItem(
+        "memuSettings",
+        JSON.stringify(settings)
+      );
+    }
+
+    function loadSettings() {
+      darkModeInput.checked =
+        savedSettings.darkMode === true;
+
+      languageInput.value =
+        savedSettings.language || "de";
+
+      nameInput.value =
+        savedSettings.name || "";
+
+      emailInput.value =
+        savedSettings.email || "";
+
+      addressInput.value =
+        savedSettings.address || "";
+
+      document.body.classList.toggle(
+        "dark",
+        darkModeInput.checked
+      );
+    }
+
+    function getNumericPrice(price) {
+      return Number(
+        price
+          .replace(/./g, "")
+          .replace(",", ".")
+          .replace("€", "")
+          .trim()
+      );
+    }
+
+    function getFilteredProducts() {
+      const searchTerm =
+        productSearch.value
+          .trim()
+          .toLowerCase();
+
+      return products.filter(product =>
+        product.name
+          .toLowerCase()
+          .includes(searchTerm)
+      );
+    }
+
+    function sortProducts(productList) {
+      const sortedProducts = [
+        ...productList
+      ];
+
+      const sortType = sortSelect.value;
+
+      if (sortType === "price-low") {
+        sortedProducts.sort(
+          (a, b) =>
+            getNumericPrice(a.price) -
+            getNumericPrice(b.price)
+        );
+      }
+
+      if (sortType === "price-high") {
+        sortedProducts.sort(
+          (a, b) =>
+            getNumericPrice(b.price) -
+            getNumericPrice(a.price)
+        );
+      }
+
+      if (sortType === "brand") {
+        sortedProducts.sort(
+          (a, b) =>
+            a.brand.localeCompare(
+              b.brand,
+              "de"
+            )
+        );
+      }
+
+      if (sortType === "name-az") {
+        sortedProducts.sort(
+          (a, b) =>
+            a.name.localeCompare(
+              b.name,
+              "de"
+            )
+        );
+      }
+
+      if (sortType === "name-za") {
+        sortedProducts.sort(
+          (a, b) =>
+            b.name.localeCompare(
+              a.name,
+              "de"
+            )
+        );
+      }
+
+      return sortedProducts;
+    }
+
+    function renderProducts(productList) {
+      const sortedProducts =
+        sortProducts(productList);
+
+      grid.innerHTML = "";
+
+      noResults.style.display =
+        sortedProducts.length === 0
+          ? "block"
+          : "none";
+
+      sortedProducts.forEach(product => {
+        const originalIndex =
+          products.indexOf(product);
+
+        const card =
+          document.createElement("article");
+
+        card.className = "card";
+        card.dataset.index = originalIndex;
+
+        card.innerHTML = `
+          <img
+            src="${product.img}"
+            alt="${product.name}"
+          >
+
+          <div class="card-body">
+            <h3>${product.name}</h3>
+
+            <div class="price">
+              ${product.price}
+            </div>
+
+            <div class="stock">
+              ${
+                languageInput.value === "en"
+                  ? `Only ${product.stock} left in stock`
+                  : `Nur noch ${product.stock} auf Lager`
+              }
+            </div>
+
+            <div class="brand">
+              ${
+                languageInput.value === "en"
+                  ? "Brand"
+                  : "Marke"
+              }:
+              ${product.brand}
+            </div>
+          </div>
+        `;
+
+        card.addEventListener(
+          "click",
+          () => openProductPage(originalIndex)
+        );
+
+        grid.appendChild(card);
+      });
+    }
+
+    function openProductPage(index) {
+      const product = products[index];
+
+      currentProductIndex = index;
+
+      modalImg.src = product.img;
+      modalImg.alt = product.name;
+      modalName.textContent = product.name;
+      modalPrice.textContent = product.price;
+
+      modalStock.textContent =
+        languageInput.value === "en"
+          ? `Only ${product.stock} left in stock`
+          : `Nur noch ${product.stock} auf Lager`;
+
+      quantityInput.value = 1;
+      adButton.style.display = "block";
+      deliveryBox.style.display = "none";
+      productModal.style.display = "block";
+    }
+
+    function closeProductPage() {
+      productModal.style.display = "none";
+
+      currentProductIndex = null;
+
+      modalImg.src = "";
+      modalImg.alt = "";
+      modalName.textContent = "";
+      modalPrice.textContent = "";
+      modalStock.textContent = "";
+
+      quantityInput.value = 1;
+      deliveryBox.style.display = "none";
+
+      /*
+        Der Countdown wird nicht gelöscht.
+        Die Bestellung bleibt gespeichert.
+      */
+    }
+
+    function addToCart(product, quantity) {
+      const existingItem =
+        cart.find(item =>
+          item.name === product.name
+        );
+
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        cart.push({
+          name: product.name,
+          price: product.price,
+          quantity: quantity
+        });
+      }
+
+      saveCart();
+      renderCart();
+    }
+
+    function renderCart() {
+      cartItems.innerHTML = "";
+
+      if (cart.length === 0) {
+        cartItems.innerHTML = `
+          <p style="color: var(--muted);">
+            ${
+              languageInput.value === "en"
+                ? "Your cart is empty."
+                : "Dein Warenkorb ist leer."
+            }
+          </p>
+        `;
+
+        cartTotal.textContent =
+          languageInput.value === "en"
+            ? "Total: €0.00"
+            : "Gesamt: 0,00 €";
+
+        checkoutButton.disabled = true;
+        checkoutButton.style.opacity = "0.5";
+        checkoutButton.style.cursor = "not-allowed";
+
+        return;
+      }
+
+      checkoutButton.disabled = false;
+      checkoutButton.style.opacity = "1";
+      checkoutButton.style.cursor = "pointer";
+
+      let total = 0;
+
+      cart.forEach((item, index) => {
+        const numericPrice =
+          getNumericPrice(item.price);
+
+        total +=
+          numericPrice * item.quantity;
+
+        const row =
+          document.createElement("div");
+
+        row.className = "cart-item";
+
+        row.innerHTML = `
+          <div class="cart-item-info">
+            <div class="cart-item-name">
+              ${item.name}
+            </div>
+
+            <div class="cart-item-price">
+              ${item.price}
+            </div>
+
+            <div class="cart-item-quantity">
+              ${
+                languageInput.value === "en"
+                  ? "Quantity"
+                  : "Menge"
+              }: ${item.quantity}
+            </div>
+          </div>
+
+          <button
+            class="remove-button"
+            type="button"
+            data-index="${index}"
+          >
+            ${
+              languageInput.value === "en"
+                ? "Remove"
+                : "Entfernen"
+            }
+          </button>
+        `;
+
+        cartItems.appendChild(row);
+      });
+
+      cartTotal.textContent =
+        languageInput.value === "en"
+          ? `Total: €${total.toFixed(2)}`
+          : `Gesamt: ${
+              total.toFixed(2).replace(".", ",")
+            } €`;
+    }
+
+    function updateCountdown() {
+      if (!savedOrder) {
+        return;
+      }
+
+      const remaining =
+        savedOrder.deliveryTimestamp - Date.now();
+
+      if (remaining <= 0) {
+        clearInterval(countdownInterval);
+
+        countdown.textContent =
+          languageInput.value === "en"
+            ? "The delivery time has expired."
+            : "Die Lieferzeit ist abgelaufen.";
+
+        return;
+      }
+
+      const days = Math.floor(
+        remaining / (1000 * 60 * 60 * 24)
+      );
+
+      const hours = Math.floor(
+        (remaining %
+          (1000 * 60 * 60 * 24)) /
+        (1000 * 60 * 60)
+      );
+
+      const minutes = Math.floor(
+        (remaining %
+          (1000 * 60 * 60)) /
+        (1000 * 60)
+      );
+
+      const seconds = Math.floor(
+        (remaining % (1000 * 60)) /
+        1000
+      );
+
+      countdown.textContent =
+        languageInput.value === "en"
+          ? `${days} days, ${hours} hours, ${minutes} minutes and ${seconds} seconds`
+          : `${days} Tage, ${hours} Stunden, ${minutes} Minuten und ${seconds} Sekunden`;
+    }
+
+    function applyLanguage() {
+      const english =
+        languageInput.value === "en";
+
+      document.documentElement.lang =
+        english ? "en" : "de";
+
+      document.getElementById("productsTitle")
+        .textContent = english
+          ? "Products"
+          : "Produkte";
+
+      document.getElementById("searchLabel")
+        .textContent = english
+          ? "Search products"
+          : "Produkte suchen";
+
+      productSearch.placeholder =
+        english
+          ? "Enter product name..."
+          : "Produktname eingeben...";
+
+      document.getElementById("sortLabel")
+        .textContent = english
+          ? "Sort by"
+          : "Sortieren nach";
+
+      sortSelect.options[0].textContent =
+        english ? "Default" : "Standard";
+
+      sortSelect.options[1].textContent =
+        english
+          ? "Price: low to high"
+          : "Preis: niedrig nach hoch";
+
+      sortSelect.options[2].textContent =
+        english
+          ? "Price: high to low"
+          : "Preis: hoch nach niedrig";
+
+      sortSelect.options[3].textContent =
+        english ? "Brand" : "Marke";
+
+      sortSelect.options[4].textContent =
+        english
+          ? "Alphabetical: A–Z"
+          : "Alphabetisch: A–Z";
+
+      sortSelect.options[5].textContent =
+        english
+          ? "Alphabetical: Z–A"
+          : "Alphabetisch: Z–A";
+
+      noResults.textContent =
+        english
+          ? "No products found."
+          : "Keine Produkte gefunden.";
+
+      document.getElementById("infoTitle")
+        .textContent = english
+          ? "Information"
+          : "Informationen";
+
+      document.getElementById("infoOne")
+        .textContent = english
+          ? "We care about good resources."
+          : "Wir achten auf gute Ressourcen.";
+
+      document.getElementById("infoTwo")
+        .textContent = english
+          ? "We make our products without child labor."
+          : "Wir stellen unsere Produkte ohne Kinderarbeit her.";
+
+      document.getElementById("infoThree")
+        .textContent = english
+          ? "For every product sold, we plant a tree."
+          : "Für jedes verkaufte Produkt pflanzen wir einen Baum.";
+
+      document.getElementById("cartButton")
+        .textContent = english
+          ? "Cart"
+          : "Warenkorb";
+
+      document.getElementById("cartTitle")
+        .textContent = english
+          ? "Your cart"
+          : "Dein Warenkorb";
+
+      document.getElementById("checkoutButton")
+        .textContent = english
+          ? "Buy everything"
+          : "Alles kaufen";
+
+      document.getElementById("settingsTitle")
+        .textContent = english
+          ? "Settings"
+          : "Einstellungen";
+
+      document.getElementById("darkModeLabel")
+        .textContent = english
+          ? "Dark mode"
+          : "Dark Mode";
+
+      document.getElementById("languageLabel")
+        .textContent = english
+          ? "Language"
+          : "Sprache";
+
+      document.getElementById("emailLabel")
+        .textContent = english
+          ? "Email"
+          : "E-Mail";
+
+      document.getElementById("addressLabel")
+        .textContent = english
+          ? "Delivery address"
+          : "Lieferadresse";
+
+      renderProducts(
+        getFilteredProducts()
+      );
+
+      renderCart();
+    }
+
+    productSearch.addEventListener(
+      "input",
+      () => {
+        renderProducts(
+          getFilteredProducts()
+        );
+      }
+    );
+
+    sortSelect.addEventListener(
+      "change",
+      () => {
+        renderProducts(
+          getFilteredProducts()
+        );
+      }
+    );
+
+    minusButton.addEventListener(
+      "click",
+      () => {
+        const quantity =
+          Number(quantityInput.value);
+
+        if (quantity > 1) {
+          quantityInput.value =
+            quantity - 1;
+        }
+      }
+    );
+
+    plusButton.addEventListener(
+      "click",
+      () => {
+        const quantity =
+          Number(quantityInput.value);
+
+        if (quantity < 99) {
+          quantityInput.value =
+            quantity + 1;
+        }
+      }
+    );
+
+    addToCartButton.addEventListener(
+      "click",
+      () => {
+        if (currentProductIndex === null) {
+          return;
+        }
+
+        const product =
+          products[currentProductIndex];
+
+        const quantity =
+          Number(quantityInput.value) || 1;
+
+        addToCart(product, quantity);
+
+        addToCartButton.textContent =
+          languageInput.value === "en"
+            ? "Added to cart"
+            : "In den Warenkorb gelegt";
+
+        setTimeout(() => {
+          addToCartButton.textContent =
+            languageInput.value === "en"
+              ? "Add to cart"
+              : "In den Warenkorb";
+        }, 1500);
+      }
+    );
+
+    checkoutButton.addEventListener(
+      "click",
+      () => {
+        if (cart.length === 0) {
+          return;
+        }
+
+        const deliveryDate = new Date();
+
+        deliveryDate.setMonth(
+          deliveryDate.getMonth() + 7
+        );
+
+        savedOrder = {
+          items: cart,
+          deliveryTimestamp:
+            deliveryDate.getTime()
+        };
+
+        localStorage.setItem(
+          "memuOrder",
+          JSON.stringify(savedOrder)
+        );
+
+        cart = [];
+        saveCart();
+        renderCart();
+
+        clearInterval(countdownInterval);
+
+        countdownInterval = setInterval(
+          updateCountdown,
+          1000
+        );
+
+        updateCountdown();
+
+        alert(
+          languageInput.value === "en"
+            ? "Your order was placed."
+            : "Deine Bestellung wurde aufgegeben."
+        );
+      }
+    );
+
+    cartButton.addEventListener(
+      "click",
+      () => {
+        renderCart();
+        cartModal.style.display = "block";
+        updateCountdown();
+      }
+    );
+
+    closeCartButton.addEventListener(
+      "click",
+      () => {
+        cartModal.style.display = "none";
+
+        /*
+          Der Countdown läuft weiter.
+          Absichtlich kein clearInterval().
+        */
+      }
+    );
+
+    cartModal.addEventListener(
+      "click",
+      event => {
+        if (event.target === cartModal) {
+          cartModal.style.display = "none";
+        }
+      }
+    );
+
+    cartItems.addEventListener(
+      "click",
+      event => {
+        if (
+          event.target.classList.contains(
+            "remove-button"
+          )
+        ) {
+          const index =
+            Number(event.target.dataset.index);
+
+          cart.splice(index, 1);
+          saveCart();
+          renderCart();
+        }
+      }
+    );
+
+    closeProductButton.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeProductPage();
+      }
+    );
+
+    productModal.addEventListener(
+      "click",
+      event => {
+        if (event.target === productModal) {
+          closeProductPage();
+        }
+      }
+    );
+
+    settingsButton.addEventListener(
+      "click",
+      () => {
+        settingsModal.style.display = "block";
+      }
+    );
+
+    closeSettingsButton.addEventListener(
+      "click",
+      () => {
+        settingsModal.style.display = "none";
+      }
+    );
+
+    saveSettingsButton.addEventListener(
+      "click",
+      () => {
+        document.body.classList.toggle(
+          "dark",
+          darkModeInput.checked
+        );
+
+        saveSettings();
+        applyLanguage();
+
+        settingsModal.style.display = "none";
+      }
+    );
+
+    darkModeInput.addEventListener(
+      "change",
+      () => {
+        document.body.classList.toggle(
+          "dark",
+          darkModeInput.checked
+        );
+      }
+    );
+
+    languageInput.addEventListener(
+      "change",
+      () => {
+        applyLanguage();
+      }
+    );
+
+    adButton.addEventListener(
+      "click",
+      () => {
+        adOverlay.style.display = "flex";
+
+        setTimeout(() => {
+          adWatched = true;
+        }, 3000);
+      }
+    );
+
+    adClose.addEventListener(
+      "click",
+      () => {
+        adOverlay.style.display = "none";
+
+        if (
+          adWatched &&
+          currentProductIndex !== null
+        ) {
+          const product =
+            products[currentProductIndex];
+
+          const discountedPrice =
+            getNumericPrice(product.price) * 0.99;
+
+          modalPrice.textContent =
+            discountedPrice
+              .toFixed(2)
+              .replace(".", ",") + " €";
+
+          adButton.style.display = "none";
+        }
+      }
+    );
+
+    window.addEventListener(
+      "keydown",
+      event => {
+        if (event.key !== "Escape") {
+          return;
+        }
+
+        if (
+          productModal.style.display === "block"
+        ) {
+          closeProductPage();
+        }
+
+        cartModal.style.display = "none";
+        settingsModal.style.display = "none";
+        adOverlay.style.display = "none";
+      }
+    );
+
+    loadSettings();
+    applyLanguage();
+    renderProducts(getFilteredProducts());
+    renderCart();
+
+    if (savedOrder) {
+      updateCountdown();
+
+      countdownInterval = setInterval(
+        updateCountdown,
+        1000
+      );
+    }
+
+    setTimeout(() => {
+      loadingOverlay.style.display = "none";
+    }, 1200);
+  </script>
+</body>
+    </html>
