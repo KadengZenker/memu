@@ -1,1 +1,1 @@
-# https://memu.de
+# https://kadengzenker.github.io/memu/
